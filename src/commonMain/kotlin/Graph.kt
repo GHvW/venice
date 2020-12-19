@@ -54,3 +54,25 @@ fun <A> Graph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
             }
         }
 }
+
+public data class TraversalState<A>(val visited: MutableSet<A>, val memory: Conjable<A>)
+
+fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<A> = { map ->
+        generateSequence(state, { s ->
+            s.memory.peek()?.let {
+                map[it]
+                    ?.map { edge -> edge.to() }
+                    ?.fold(s.copy(memory = s.memory.pop())) { result, vertex ->
+                        if (result.visited.contains(vertex)) {
+                            result
+                        } else {
+                            result.visited.add(vertex)
+                            TraversalState(result.visited, result.memory.conj(vertex))
+                        }
+                    }
+            }
+        }).mapNotNull { s -> s.memory.peek() }
+    }
+
+//fun <A> AdjacencyMap<A>.depthFirstSearch(): Sequence<A>
+//fun <A> AdjacencyMap<A>.breadthFirstSearch(): Sequence<A>

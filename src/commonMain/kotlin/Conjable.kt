@@ -1,6 +1,8 @@
 package ghvw.graph
 
 // TODO - if you can, make Conjable "Conjable<F<A>>" at some point
+// Arrow's Kinds might be an option,
+// where Conjable is Conjable<F> and we use fun <A> Kind<F, A>.conj(item: A): Kind<F, A> or something
 interface Conjable<A> {
     fun conj(item: A): Conjable<A>
     fun peek(): A?
