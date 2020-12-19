@@ -1,34 +1,45 @@
-sealed class Edge<out A>
+package ghvw.graph
+
+interface Edge<A> {
+    fun to(): A
+    fun from(): A
+    fun other(item: A): A
+}
 
 
 data class UnweightedEdge<A>(
     val v: A,
-    val w: A) : Edge<A>()
+    val w: A) : Edge<A> {
+
+    override fun to(): A =
+        this.v
+
+    override fun from(): A =
+        this.w
+
+    override fun other(item: A): A =
+        if (item == this.v) {
+            this.w
+        } else {
+            this.v
+        }
+}
 
 
 data class WeightedEdge<A>(
     val edge: UnweightedEdge<A>,
-    val weight: Int) : Edge<A>()
+    val weight: Int) : Edge<A> {
 
+    override fun to(): A =
+        this.edge.v
 
-fun <A> Edge<A>.to(): A = when(this) {
-    is UnweightedEdge -> this.v
-    is WeightedEdge -> this.edge.v
+    override fun from(): A =
+        this.edge.w
+
+    override fun other(item: A): A =
+        if (item == this.edge.v) {
+            this.edge.w
+        } else {
+            this.edge.w
+        }
 }
-
-
-fun <A> Edge<A>.from(): A = when(this) {
-    is UnweightedEdge -> this.w
-    is WeightedEdge -> this.edge.w
-}
-
-
-fun <A> Edge<A>.other(v: A): A = when(this) {
-    is UnweightedEdge ->
-        if (v == this.v) this.w
-        else this.v
-    is WeightedEdge ->
-        if (v == this.edge.v) this.edge.w
-        else this.edge.v
-}
-
