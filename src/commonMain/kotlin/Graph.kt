@@ -1,9 +1,6 @@
 package ghvw.graph
 
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.*
 
 // G = (V, E)
 data class Graph<A>(
@@ -17,8 +14,8 @@ typealias AdjacencyMap<A> = PersistentMap<A, PersistentSet<Edge<A>>>
 fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
     val map =
         this.vertices
-            .fold(persistentHashMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
-                return persistentMap.put(vertex, persistentHashSetOf<Edge<A>>())
+            .fold(persistentMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
+                persistentMap.put(vertex, persistentSetOf<Edge<A>>())
             }
 
     return this
@@ -27,7 +24,9 @@ fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
             val to = persistentMap[edge.to()]
             val from = persistentMap[edge.from()]
             if (to != null && from != null) {
-                persistentMap.put(edge.to(), to.add(edge)).put(edge.from(), from.add(edge))
+                persistentMap
+                    .put(edge.to(), to.add(edge))
+                    .put(edge.from(), from.add(edge))
             } else {
                 persistentMap
             }
@@ -38,9 +37,10 @@ fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
 // this could probably use a Lens
 fun <A> Graph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
     val map =
-        this.vertices
-            .fold(persistentHashMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
-                return persistentMap.put(vertex, persistentHashSetOf<Edge<A>>())
+        this
+            .vertices
+            .fold(persistentMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
+                persistentMap.put(vertex, persistentSetOf<Edge<A>>())
             }
 
     return this
@@ -55,26 +55,30 @@ fun <A> Graph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
         }
 }
 
-public data class TraversalState<A>(val visited: MutableSet<A>, val memory: Conjable<A>)
+data class TraversalState<A>(
+    val visited: MutableSet<A>,
+    val memory: Conjable<A>
+)
+
 
 fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<A> = { map ->
-        generateSequence(state, { s ->
-            s.memory.peek()?.let {
-                map[it]?.let { vertices ->
-                    vertices
-                        .map { edge -> edge.to() }
-                        .fold(s.copy(memory = s.memory.pop())) { result, vertex ->
-                            if (result.visited.contains(vertex)) {
-                                result
-                            } else {
-                                result.visited.add(vertex)
-                                TraversalState(result.visited, result.memory.conj(vertex))
-                            }
+    generateSequence(state, { s ->
+        s.memory.peek()?.let {
+            map[it]?.let { edges ->
+                edges
+                    .map { edge -> edge.other(it) }
+                    .fold(s.copy(memory = s.memory.pop())) { result, vertex ->
+                        if (result.visited.contains(vertex)) {
+                            result
+                        } else {
+                            result.visited.add(vertex)
+                            TraversalState(result.visited, result.memory.conj(vertex))
                         }
-                }
+                    }
             }
-        }).mapNotNull { s -> s.memory.peek() }
-    }
+        }
+    }).mapNotNull { s -> s.memory.peek() }
+}
 
 //fun <A> AdjacencyMap<A>.depthFirstSearch(): Sequence<A>
 //fun <A> AdjacencyMap<A>.breadthFirstSearch(): Sequence<A>
