@@ -75,7 +75,7 @@ class GraphTest {
                 .depthFirstTraverseFrom(5)
                 .toList()
 
-        assertEquals(listOf(5, 10, 12), result)
+        assertEquals(listOf(U(5, 10), U(5, 12)), result)
     }
 
     @Test
@@ -86,6 +86,6 @@ class GraphTest {
                 .breadthFirstTraverseFrom(5)
                 .toList()
 
-        assertEquals(listOf(5, 10, 12), result)
+        assertEquals(listOf(U(5, 10), U(10, 12)), result)
     }
 }
