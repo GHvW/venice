@@ -70,7 +70,11 @@ data class TraversalState<A>(
     val memory: Conjable<Pair<A, Edge<A>>>
 )
 
-
+// TODO - would it be better to treat everything as a directed edge?
+// and get away with a sequence of edges instead of a sequence of Pair<vertex, edge> ?
+// it would make double the edges in an undirected graph but get rid of the Pairs
+// right now, traverse has unnecessary detail for a directed graph traverse. no need to figure out
+// to and from because it only goes one way.
 fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<Pair<A, Edge<A>>> = { map ->
     generateSequence(state, { s ->
         s.memory.peek()?.let {
