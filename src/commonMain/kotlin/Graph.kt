@@ -8,7 +8,15 @@ data class Graph<A>(
     val edges: PersistentSet<Edge<A>>
 )
 
+
+fun <A> unweightedEdgeSetOf(vararg pairs: Pair<A, A>): PersistentSet<Edge<A>> =
+    pairs
+        .map { pair -> UnweightedEdge(pair.first, pair.second) }
+        .toPersistentSet()
+
+
 typealias AdjacencyMap<A> = PersistentMap<A, PersistentSet<Edge<A>>>
+
 
 // this could probably use a Lens
 fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
@@ -55,6 +63,7 @@ fun <A> Graph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
         }
 }
 
+
 data class TraversalState<A>(
     val visited: MutableSet<A>,
     val memory: Conjable<A>
@@ -80,5 +89,5 @@ fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<A> = {
     }).mapNotNull { s -> s.memory.peek() }
 }
 
-//fun <A> AdjacencyMap<A>.depthFirstSearch(): Sequence<A>
-//fun <A> AdjacencyMap<A>.breadthFirstSearch(): Sequence<A>
+//fun <A> AdjacencyMap<A>.depthFirstTraverse(): Sequence<A>
+//fun <A> AdjacencyMap<A>.breadthFirstTraverse(): Sequence<A>

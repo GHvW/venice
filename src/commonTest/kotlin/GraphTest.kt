@@ -1,29 +1,72 @@
 import ghvw.graph.Graph
 import ghvw.graph.UnweightedEdge
 import ghvw.graph.toAdjacencyMap
+import ghvw.graph.unweightedEdgeSetOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlin.test.*
 
+typealias U<A> = UnweightedEdge<A>
+
 class GraphTest {
     private val graph = Graph(
         persistentSetOf(5, 7, 9, 10, 20, 21, 11, 30),
-        persistentSetOf(
-            UnweightedEdge(5, 7),
-            UnweightedEdge(5, 9),
-            UnweightedEdge(5, 10),
-            UnweightedEdge(7, 20),
-            UnweightedEdge(7, 21),
-            UnweightedEdge(9, 11),
-            UnweightedEdge(10, 11),
-            UnweightedEdge(11, 30)
+        unweightedEdgeSetOf(
+            5 to 7,
+            5 to 9,
+            5 to 10,
+            7 to 20,
+            7 to 21,
+            9 to 11,
+            10 to 11,
+            11 to 30,
+            21 to 30,
         )
     )
 
     @Test
     fun graphToAdjacencyMap_SuccessfullyCreatesAdjMap() {
-        val map = graph.toAdjacencyMap()
+        val result = graph.toAdjacencyMap()
 
-        assertEquals(persistentMapOf(5 to persistentSetOf(9, 7)), map)
+        val expected = persistentMapOf(
+            5 to persistentSetOf(
+                U(5, 7),
+                U(5, 9),
+                U(5, 10)
+            ),
+            7 to persistentSetOf(
+                U(7, 20),
+                U(7, 21),
+                U(5, 7)
+            ),
+            9 to persistentSetOf(
+                U(5, 9),
+                U(9, 11),
+            ),
+            10 to persistentSetOf(
+                U(5, 10),
+                U(10, 11)
+            ),
+            11 to persistentSetOf(
+                U(9, 11),
+                U(10, 11),
+                U(11, 30),
+            ),
+            20 to persistentSetOf(
+                U(7, 20)
+            ),
+            21 to persistentSetOf(
+                U(7, 21),
+                U(21, 30)
+            ),
+            30 to persistentSetOf(
+                U(11, 30),
+                U(21, 30),
+            ),
+
+        )
+
+        assertEquals(expected.count(), result.count())
+        assertEquals(expected, result)
     }
 }
