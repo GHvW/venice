@@ -111,20 +111,6 @@ fun <A> AdjacencyMap<A>.depthFirstTraverseFrom(vertex: A): Sequence<Edge<A>> =
                 mutableSetOf(vertex),
                 Stack(mutableListOf(U(vertex, vertex))) // Unweighted Edge as the start?
             ))(this)
-//    this[vertex]
-//        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
-//            val other = edge.other(vertex)
-//            pair.first.add(other)
-//            pair.second.add(Pair(other, edge))
-//            pair
-//        }.let {
-//            traverse(
-//                TraversalState(
-//                    it?.first ?: mutableSetOf(),
-//                    Stack(it?.second ?: mutableListOf())
-//                ))(this)
-//        }
-
 
 
 fun <A> AdjacencyMap<A>.breadthFirstTraverseFrom(vertex: A): Sequence<Edge<A>> =
@@ -133,25 +119,23 @@ fun <A> AdjacencyMap<A>.breadthFirstTraverseFrom(vertex: A): Sequence<Edge<A>> =
             mutableSetOf(vertex),
             Queue(ArrayDeque(listOf(U(vertex, vertex))))
         ))(this)
-//    this[vertex]
-//        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
-//            val other = edge.other(vertex)
-//            pair.first.add(other)
-//            pair.second.add(Pair(other, edge))
-//            pair
-//        }.let {
-//            traverse(
-//                TraversalState(
-//                    it?.first ?: mutableSetOf(),
-//                    Queue(ArrayDeque(it?.second ?: listOf()))
-//                ))(this)
-//        }
 
 
-//fun <A> AdjacencyMap<A>.shortestPathsTo(vertex: A): Map<A, A> =
-//    this
-//        .breadthFirstTraverseFrom(vertex)
-//        .fold(mutableMapOf()) { v ->
-//
-//        }
-//
+fun <A> AdjacencyMap<A>.shortestPathsTo(vertex: A): Map<A, A> =
+    this
+        .breadthFirstTraverseFrom(vertex)
+        .fold(mutableMapOf()) { map, edge ->
+            map[edge.to()] = edge.from()
+            map
+        }
+
+fun <A> shortestPath(paths: Map<A, A>, from: A): Sequence<A> =
+    generateSequence(from) { vertex ->
+        paths[vertex]?.let {
+            if (it != vertex) {
+                it
+            } else {
+                null
+            }
+        }
+    }
