@@ -6,7 +6,7 @@ import kotlin.test.*
 typealias U<A> = UnweightedEdge<A>
 
 class GraphTest {
-    private val graph = Graph(
+    private val graph = UnweightedGraph(
         persistentSetOf(5, 7, 9, 10, 20, 21, 11, 30),
         unweightedEdgeSetOf(
             5 to 7,
@@ -34,31 +34,31 @@ class GraphTest {
             7 to persistentSetOf(
                 U(7, 20),
                 U(7, 21),
-                U(5, 7)
+                U(7, 5)
             ),
             9 to persistentSetOf(
-                U(5, 9),
+                U(9, 5),
                 U(9, 11),
             ),
             10 to persistentSetOf(
-                U(5, 10),
+                U(10, 5),
                 U(10, 11)
             ),
             11 to persistentSetOf(
-                U(9, 11),
-                U(10, 11),
+                U(11, 9),
+                U(11, 10),
                 U(11, 30),
             ),
             20 to persistentSetOf(
-                U(7, 20)
+                U(20, 7)
             ),
             21 to persistentSetOf(
-                U(7, 21),
+                U(21, 7),
                 U(21, 30)
             ),
             30 to persistentSetOf(
-                U(11, 30),
-                U(21, 30),
+                U(30, 11),
+                U(30, 21),
             ),
 
         )

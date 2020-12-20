@@ -43,3 +43,4 @@ data class WeightedEdge<A>(
             this.edge.w
         }
 }
+

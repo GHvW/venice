@@ -8,8 +8,18 @@ data class Graph<A>(
     val edges: PersistentSet<Edge<A>>
 )
 
+data class UnweightedGraph<A>(
+    val vertices: PersistentSet<A>,
+    val edges: PersistentSet<UnweightedEdge<A>>
+)
 
-fun <A> unweightedEdgeSetOf(vararg pairs: Pair<A, A>): PersistentSet<Edge<A>> =
+data class WeightedGraph<A>(
+    val vertices: PersistentSet<A>,
+    val edges: PersistentSet<WeightedEdge<A>>
+)
+
+
+fun <A> unweightedEdgeSetOf(vararg pairs: Pair<A, A>): PersistentSet<UnweightedEdge<A>> =
     pairs
         .map { pair -> UnweightedEdge(pair.first, pair.second) }
         .toPersistentSet()
@@ -20,22 +30,22 @@ typealias AdjacencyMap<A> = PersistentMap<A, PersistentSet<Edge<A>>>
 typealias U<A> = UnweightedEdge<A>
 
 // this could probably use a Lens
-fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
+fun <A> UnweightedGraph<A>.toAdjacencyMap(): AdjacencyMap<A> {
     val map =
         this.vertices
             .fold(persistentMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
-                persistentMap.put(vertex, persistentSetOf<Edge<A>>())
+                persistentMap.put(vertex, persistentSetOf())
             }
 
     return this
         .edges
         .fold(map) { persistentMap, edge ->
-            val to = persistentMap[edge.to()]
             val from = persistentMap[edge.from()]
-            if (to != null && from != null) {
+            val to = persistentMap[edge.to()]
+            if (from != null && to != null) {
                 persistentMap
-                    .put(edge.to(), to.add(edge))
                     .put(edge.from(), from.add(edge))
+                    .put(edge.to(), to.add(UnweightedEdge(edge.to(), edge.from())))
             } else {
                 persistentMap
             }
@@ -44,30 +54,29 @@ fun <A> Graph<A>.toAdjacencyMap(): AdjacencyMap<A> {
 
 
 // this could probably use a Lens
-fun <A> Graph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
+fun <A> UnweightedGraph<A>.toDirectedAdjacencyMap(): AdjacencyMap<A> {
     val map =
         this
             .vertices
             .fold(persistentMapOf<A, PersistentSet<Edge<A>>>()) { persistentMap, vertex ->
-                persistentMap.put(vertex, persistentSetOf<Edge<A>>())
+                persistentMap.put(vertex, persistentSetOf())
             }
 
     return this
         .edges
         .fold(map) { persistentMap, edge ->
-            val to = persistentMap[edge.to()]
-            if (to != null) {
-                persistentMap.put(edge.to(), to.add(edge))
-            } else {
-                persistentMap
-            }
+            persistentMap[edge.from()]
+                ?.let {
+                    persistentMap.put(edge.from(), it.add(edge))
+                }
+                ?: persistentMap
         }
 }
 
 
 data class TraversalState<A>(
     val visited: MutableSet<A>,
-    val memory: Conjable<Pair<A, Edge<A>>>
+    val memory: Conjable<Edge<A>>
 )
 
 // TODO - would it be better to treat everything as a directed edge?
@@ -75,19 +84,19 @@ data class TraversalState<A>(
 // it would make double the edges in an undirected graph but get rid of the Pairs
 // right now, traverse has unnecessary detail for a directed graph traverse. no need to figure out
 // to and from because it only goes one way.
-fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<Pair<A, Edge<A>>> = { map ->
+fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<Edge<A>> = { map ->
     generateSequence(state, { s ->
         s.memory.peek()?.let {
-            map[it.first]?.let { edges ->
+            map[it.to()]?.let { edges ->
                 edges
                     .fold(s.copy(memory = s.memory.pop())) { result, edge ->
-                        val (vertexFrom, _) = it
-                        val vertex = edge.other(vertexFrom)
+//                        val (vertexFrom, _) = it
+                        val vertex = edge.to()
                         if (result.visited.contains(vertex)) {
                             result
                         } else {
                             result.visited.add(vertex)
-                            TraversalState(result.visited, result.memory.conj(vertex to edge))
+                            TraversalState(result.visited, result.memory.conj(edge))
                         }
                     }
             }
@@ -96,36 +105,47 @@ fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<Pair<A
 }
 
 
-fun <A> AdjacencyMap<A>.depthFirstTraverseFrom(vertex: A): Sequence<Pair<A, Edge<A>>> =
-    this[vertex]
-        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
-            val other = edge.other(vertex)
-            pair.first.add(other)
-            pair.second.add(Pair(other, edge))
-            pair
-        }.let {
-            traverse(
-                TraversalState(
-                    it?.first ?: mutableSetOf(),
-                    Stack(it?.second ?: mutableListOf())
-                ))(this)
-        }
+fun <A> AdjacencyMap<A>.depthFirstTraverseFrom(vertex: A): Sequence<Edge<A>> =
+        traverse(
+            TraversalState(
+                mutableSetOf(vertex),
+                Stack(mutableListOf(U(vertex, vertex))) // Unweighted Edge as the start?
+            ))(this)
+//    this[vertex]
+//        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
+//            val other = edge.other(vertex)
+//            pair.first.add(other)
+//            pair.second.add(Pair(other, edge))
+//            pair
+//        }.let {
+//            traverse(
+//                TraversalState(
+//                    it?.first ?: mutableSetOf(),
+//                    Stack(it?.second ?: mutableListOf())
+//                ))(this)
+//        }
 
 
-fun <A> AdjacencyMap<A>.breadthFirstTraverseFrom(vertex: A): Sequence<Pair<A, Edge<A>>> =
-    this[vertex]
-        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
-            val other = edge.other(vertex)
-            pair.first.add(other)
-            pair.second.add(Pair(other, edge))
-            pair
-        }.let {
-            traverse(
-                TraversalState(
-                    it?.first ?: mutableSetOf(),
-                    Queue(ArrayDeque(it?.second ?: listOf()))
-                ))(this)
-        }
+
+fun <A> AdjacencyMap<A>.breadthFirstTraverseFrom(vertex: A): Sequence<Edge<A>> =
+    traverse(
+        TraversalState(
+            mutableSetOf(vertex),
+            Queue(ArrayDeque(listOf(U(vertex, vertex))))
+        ))(this)
+//    this[vertex]
+//        ?.fold(Pair(mutableSetOf(vertex), mutableListOf<Pair<A, Edge<A>>>())) { pair, edge ->
+//            val other = edge.other(vertex)
+//            pair.first.add(other)
+//            pair.second.add(Pair(other, edge))
+//            pair
+//        }.let {
+//            traverse(
+//                TraversalState(
+//                    it?.first ?: mutableSetOf(),
+//                    Queue(ArrayDeque(it?.second ?: listOf()))
+//                ))(this)
+//        }
 
 
 //fun <A> AdjacencyMap<A>.shortestPathsTo(vertex: A): Map<A, A> =
