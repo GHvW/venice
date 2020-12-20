@@ -89,5 +89,17 @@ fun <A> traverse(state: TraversalState<A>): (AdjacencyMap<A>) -> Sequence<A> = {
     }).mapNotNull { s -> s.memory.peek() }
 }
 
-//fun <A> AdjacencyMap<A>.depthFirstTraverse(): Sequence<A>
-//fun <A> AdjacencyMap<A>.breadthFirstTraverse(): Sequence<A>
+fun <A> AdjacencyMap<A>.depthFirstTraverseFrom(vertex: A): Sequence<A> =
+    traverse(
+        TraversalState(
+            mutableSetOf(vertex),
+            Stack(mutableListOf(vertex))
+        ))(this)
+
+
+fun <A> AdjacencyMap<A>.breadthFirstTraverseFrom(vertex: A): Sequence<A> =
+    traverse(
+        TraversalState(
+            mutableSetOf(vertex),
+            Queue(ArrayDeque(listOf(vertex)))
+        ))(this)

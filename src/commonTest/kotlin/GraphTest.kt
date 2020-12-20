@@ -1,7 +1,4 @@
-import ghvw.graph.Graph
-import ghvw.graph.UnweightedEdge
-import ghvw.graph.toAdjacencyMap
-import ghvw.graph.unweightedEdgeSetOf
+import ghvw.graph.*
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlin.test.*
@@ -68,5 +65,27 @@ class GraphTest {
 
         assertEquals(expected.count(), result.count())
         assertEquals(expected, result)
+    }
+
+    @Test
+    fun depthFirstTraverseTest() {
+        val result =
+            graph
+                .toAdjacencyMap()
+                .depthFirstTraverseFrom(5)
+                .toList()
+
+        assertEquals(listOf(5, 10, 12), result)
+    }
+
+    @Test
+    fun breadthFirstTraverseTest() {
+        val result =
+            graph
+                .toAdjacencyMap()
+                .breadthFirstTraverseFrom(5)
+                .toList()
+
+        assertEquals(listOf(5, 10, 12), result)
     }
 }
