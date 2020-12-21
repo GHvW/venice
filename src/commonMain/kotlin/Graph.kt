@@ -139,3 +139,5 @@ fun <A> shortestPath(paths: Map<A, A>, from: A): Sequence<A> =
             }
         }
     }
+
+fun <A> AdjacencyMap<A>.dijkstraShortestPathsTo(vertex: A): Pair<Map<A, A>, Map<A, Int>> =
