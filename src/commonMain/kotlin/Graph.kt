@@ -140,6 +140,23 @@ fun <A> shortestPath(paths: Map<A, A>, from: A): Sequence<A> =
         }
     }
 
-//fun <A> relax(edge: WeightedEdge<A>, vertex: A)
+data class DijkstraState<A>(
+    val visited: MutableSet<A>,
+    val memory: Conjable<Pair<Int, WeightedEdge<A>>>, // Conjable being a PriorityQueue here
+    val distances: MutableMap<A, Int>
+)
+
+fun <A> relax(state: DijkstraState<A>, edge: WeightedEdge<A>): DijkstraState<A> {
+    val toDistance = state.distances[edge.to()]
+    val fromDistance = state.distances[edge.from()] ?: Int.MAX_VALUE
+
+    return if (toDistance == null || edge.weight + fromDistance < toDistance) {
+        state.distances[edge.to()] = edge.weight + fromDistance
+        state.visited.add(edge.to())
+        state.copy(memory = state.memory.conj(Pair(edge.weight, edge)))
+    } else {
+        state
+    }
+}
 
 //fun <A> AdjacencyMap<A>.dijkstraShortestPathsTo(vertex: A): Pair<Map<A, A>, Map<A, Int>> =
